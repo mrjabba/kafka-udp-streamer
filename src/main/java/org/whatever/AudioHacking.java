@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.io.File;
+
 @SpringBootApplication
 public class AudioHacking extends Application {
     private static final Logger log = LoggerFactory.getLogger(AudioHacking.class);
@@ -35,7 +37,9 @@ public class AudioHacking extends Application {
 
         primaryStage.setTitle("hello something something");
 
-        Media media = new Media("file:///Users/kevin.hutson/Downloads/sample.mp3");
+        File sampleFile = new File("samples/demo.mp3");
+
+        Media media = new Media(sampleFile.toURI().toString());
         MediaPlayer mediaPlayer = new MediaPlayer(media);
 
         MediaView mediaView = new MediaView(mediaPlayer);
