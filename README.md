@@ -1,5 +1,13 @@
 # Kafka UDP Streamer
 
+# Topic/Producer configuration
+Until we try splitting audio files into small chunks, it will be necessary to increase the `max.message.bytes` to something large 
+enough to support some songs.
+Example:
+`kafka-topics --zookeeper local.docker:2181 --partitions 1 --replication-factor 1 --create --topic TT-AUDIO-2 --config max.message.bytes=8000000`
+Then, in the producer you'll also need to increase the `max.request.size`:
+`config.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG, 8000000);`
+
 Things to try now:
 - publish audio to the kafka topic (any special encoding needed?) format? wav for now since mp3 can't be easily split?
 - Clicking play starts consuming from a topic and plays audio
