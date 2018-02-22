@@ -19,6 +19,7 @@ import java.io.File;
 public class AudioHacking extends Application {
 
     private PublishingService publishingService;
+    private AudioMessageHandler audioMessageHandler;
 
     public static void main(String[] args) {
         launch(args);
@@ -28,6 +29,7 @@ public class AudioHacking extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         this.publishingService = new PublishingService(new AudioPublisher());
+        this.audioMessageHandler = new AudioMessageHandler("TT-AUDIO-2");
 
         Button startButton = new Button();
         Button stopButton = new Button();
@@ -62,7 +64,8 @@ public class AudioHacking extends Application {
         });
 
         startButton.setOnAction(event -> {
-            mediaPlayer.play();
+//            mediaPlayer.play();
+            audioMessageHandler.consume();
             actionMessage.setText("Playing...");
         });
 
