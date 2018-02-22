@@ -12,21 +12,22 @@ import java.util.UUID;
 import java.util.concurrent.Future;
 
 import static org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
+import static org.whatever.Constants.AUDIO_TOPIC;
+import static org.whatever.Constants.KAFKA_BOOTSTRAP_SERVERS;
 
 @Slf4j
 public class AudioPublisher {
-    public static final String PUBLISH_TOPIC = "TT-AUDIO-2";
     private KafkaProducer producer;
 
     public AudioPublisher() {
         HashMap<String, Object> config = new HashMap<>();
-        config.put(BOOTSTRAP_SERVERS_CONFIG, "local.docker:9092");
+        config.put(BOOTSTRAP_SERVERS_CONFIG, KAFKA_BOOTSTRAP_SERVERS);
         config.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG, 8000000);
         this.producer = new KafkaProducer(config, new StringSerializer(), new ByteArraySerializer());
     }
 
     public void publish(byte[] value) {
-        ProducerRecord<String, Object> record = new ProducerRecord<>(PUBLISH_TOPIC, UUID.randomUUID().toString(), value);
+        ProducerRecord<String, Object> record = new ProducerRecord<>(AUDIO_TOPIC, UUID.randomUUID().toString(), value);
 
         Future result = producer.send(record);
 

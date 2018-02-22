@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
+import static org.whatever.Constants.KAFKA_BOOTSTRAP_SERVERS;
+
 public class AudioMessageHandler {
     private String topic;
     private KafkaConsumer consumer;
@@ -23,7 +25,7 @@ public class AudioMessageHandler {
     public AudioMessageHandler(String topic) {
         this.topic = topic;
         Properties props = new Properties();
-        props.put("bootstrap.servers", "local.docker:9092");
+        props.put("bootstrap.servers", KAFKA_BOOTSTRAP_SERVERS);
         // For now, just use a random group ID until we get further along
         props.put("group.id", UUID.randomUUID().toString());
         props.put("key.deserializer", StringDeserializer.class);
