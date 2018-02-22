@@ -2,13 +2,9 @@ buildscript {
     repositories {
         mavenCentral()
     }
-    dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.10.RELEASE")
-    }
 }
 
 ext {
-    springBootVersion = "1.5.10.RELEASE"
     groovyMinorVersion = "2.4"
     spockVersion = "1.1-groovy-${groovyMinorVersion}"
 }
@@ -17,15 +13,12 @@ apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'groovy'
 
-apply plugin: "org.springframework.boot"
-
 repositories {
     mavenCentral()
     jcenter()
 }
 
 dependencies {
-    compile("org.springframework.boot:spring-boot-starter-web:${springBootVersion}")
     compile "org.projectlombok:lombok:1.16.14"
     compile "commons-lang:commons-lang:2.6"
     compile "org.codehaus.groovy:groovy-all:2.4.4"
@@ -33,12 +26,8 @@ dependencies {
         exclude group: 'org.slf4j'
     }
 
-    testCompile "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
     testCompile "org.projectlombok:lombok:1.16.14"
     testCompile("org.spockframework:spock-core:${spockVersion}") {
-        exclude group: "org.codehaus.groovy"
-    }
-    testCompile ("org.spockframework:spock-spring:${spockVersion}") {
         exclude group: "org.codehaus.groovy"
     }
 }
