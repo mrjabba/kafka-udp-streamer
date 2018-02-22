@@ -1,11 +1,15 @@
+# Gradle
+.gradle/
+build/
+logs/
+out/
+
+# IDEA
+.idea/
 *.iml
 *.ipr
 *.iws
+*.ids
 
-.idea
-.gradle
-gradlew*
-gradle/
-
-build/
-out/
+# OS
+.DS_Store
