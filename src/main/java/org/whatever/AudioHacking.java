@@ -32,7 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.whatever.domain.Playlist;
-import org.whatever.domain.Song;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -42,6 +41,7 @@ import static com.mongodb.client.model.Filters.eq;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static org.whatever.Constants.AUDIO_TOPIC;
+import static org.whatever.Constants.LOCAL_AUDIO_STORE_PATH;
 import static org.whatever.Constants.LOGO_IMAGE;
 
 @Slf4j
@@ -49,6 +49,7 @@ public class AudioHacking extends Application {
 
     private PublishingService publishingService;
     private AudioMessageHandler audioMessageHandler;
+    private int currentTrackId = 0;
 
     public static void main(String[] args) {
         launch(args);
@@ -60,10 +61,10 @@ public class AudioHacking extends Application {
         log.info("===== starting app! ====");
 
         CodecRegistry pojoCodecRegistry = fromRegistries(MongoClient.getDefaultCodecRegistry(),
-                fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+                                                         fromProviders(PojoCodecProvider.builder().automatic(true).build()));
 
         MongoClient mongoClient = new MongoClient("localhost",
-                MongoClientOptions.builder().codecRegistry(pojoCodecRegistry).build());
+                                                  MongoClientOptions.builder().codecRegistry(pojoCodecRegistry).build());
 
         MongoDatabase db = mongoClient.getDatabase("playlists");
 
@@ -100,34 +101,46 @@ public class AudioHacking extends Application {
 
         Button startButton = new Button();
         Button stopButton = new Button();
+        Button nextTrackButton = new Button();
+        Button previousTrackButton = new Button();
         Button chooseDirectoryButton = new Button();
 
         Text titleLogoText = new Text("KafkaAmp!");
         Text actionMessage = new Text();
 
-        startButton.setText("Start");
+        startButton.setText("Play");
         stopButton.setText("Stop");
+        nextTrackButton.setText(">>");
+        previousTrackButton.setText("<<");
         chooseDirectoryButton.setText("Choose Directory");
 
 
         primaryStage.setTitle("KafkaAmp");
 
-        File sampleFile = new File("samples/demo.mp3");
+        playIntroSound();
 
-        Media media = new Media(sampleFile.toURI().toString());
-        MediaPlayer mediaPlayer = new MediaPlayer(media);
 
-        MediaView mediaView = new MediaView(mediaPlayer);
+        File audioDirectory = new File(LOCAL_AUDIO_STORE_PATH);
+        File[] mp3Files = audioDirectory.listFiles((d, s) -> {
+            return s.toLowerCase().endsWith("mp3");
+        });
+
+        List<MediaView> mediaViews = new ArrayList<>();
+
+        for (File mp3File : mp3Files) {
+            Media media = new Media(mp3File.toURI().toString());
+            mediaViews.add(new MediaView(new MediaPlayer(media)));
+        }
 
         HBox logoBox = new HBox();
         logoBox.getChildren().addAll(titleLogoText);
 
         HBox buttonBox = new HBox();
-        buttonBox.getChildren().addAll(startButton, stopButton, chooseDirectoryButton);
+        buttonBox.getChildren().addAll(previousTrackButton, startButton, nextTrackButton, stopButton, chooseDirectoryButton);
 
         VBox vBoxRoot = new VBox(10);
         vBoxRoot.setAlignment(Pos.CENTER);
-        vBoxRoot.getChildren().addAll(logoBox, mediaView, buttonBox, actionMessage);
+        vBoxRoot.getChildren().addAll(logoBox, buttonBox, actionMessage);
 
         vBoxRoot.setBackground(new Background(backgroundImage));
 
@@ -142,16 +155,47 @@ public class AudioHacking extends Application {
         });
 
         startButton.setOnAction(event -> {
-//            mediaPlayer.play();
-            audioMessageHandler.consume();
+            mediaViews.get(currentTrackId).getMediaPlayer().play();
             actionMessage.setText("Playing...");
         });
 
         stopButton.setOnAction(event -> {
             actionMessage.setText("Stopping...");
-            mediaPlayer.stop();
+            mediaViews.get(currentTrackId).getMediaPlayer().stop();
             actionMessage.setText("Stopped");
         });
+
+        nextTrackButton.setOnAction(event -> nextTrack(mediaViews));
+        previousTrackButton.setOnAction(event -> previousTrack(mediaViews));
+    }
+
+    private void playIntroSound() {
+        File sampleFile = new File("samples/demo.mp3");
+        Media sampleMedia = new Media(sampleFile.toURI().toString());
+        MediaPlayer mediaPlayer = new MediaPlayer(sampleMedia);
+        mediaPlayer.play();
+    }
+
+    private void nextTrack(List<MediaView> mediaViews) {
+        mediaViews.get(currentTrackId).getMediaPlayer().stop();
+        if (currentTrackId == mediaViews.size()-1) {
+            currentTrackId = 0;
+        }
+        else {
+            currentTrackId++;
+        }
+        mediaViews.get(currentTrackId).getMediaPlayer().play();
+    }
+
+    private void previousTrack(List<MediaView> mediaViews) {
+        mediaViews.get(currentTrackId).getMediaPlayer().stop();
+        if (currentTrackId == 0) {
+            currentTrackId = 0;
+        }
+        else {
+            currentTrackId--;
+        }
+        mediaViews.get(currentTrackId).getMediaPlayer().play();
     }
 
     private void pickDirectory(Stage primaryStage) {
