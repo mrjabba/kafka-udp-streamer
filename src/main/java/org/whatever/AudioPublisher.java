@@ -8,7 +8,6 @@ import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.util.HashMap;
-import java.util.UUID;
 import java.util.concurrent.Future;
 
 import static org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
@@ -26,8 +25,8 @@ public class AudioPublisher {
         this.producer = new KafkaProducer(config, new StringSerializer(), new ByteArraySerializer());
     }
 
-    public void publish(byte[] value) {
-        ProducerRecord<String, Object> record = new ProducerRecord<>(AUDIO_TOPIC, UUID.randomUUID().toString(), value);
+    public void publish(String name, byte[] value) {
+        ProducerRecord<String, Object> record = new ProducerRecord<>(AUDIO_TOPIC, name, value);
 
         Future result = producer.send(record);
 
