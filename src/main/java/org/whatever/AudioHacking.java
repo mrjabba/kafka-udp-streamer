@@ -8,11 +8,14 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.UpdateOptions;
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Background;
@@ -25,6 +28,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
@@ -43,6 +47,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static org.whatever.Constants.AUDIO_TOPIC;
 import static org.whatever.Constants.LOCAL_AUDIO_STORE_PATH;
 import static org.whatever.Constants.LOGO_IMAGE;
+import static org.whatever.Constants.TITLE_IMAGE;
 
 @Slf4j
 public class AudioHacking extends Application {
@@ -50,6 +55,8 @@ public class AudioHacking extends Application {
     private PublishingService publishingService;
     private AudioMessageHandler audioMessageHandler;
     private int currentTrackId = 0;
+    private ObservableList<String> songList = FXCollections.observableArrayList();
+    ListView<String> songListView = new ListView<>();
 
     public static void main(String[] args) {
         launch(args);
@@ -92,33 +99,35 @@ public class AudioHacking extends Application {
 //
 //        results.forEach(printBlock);
 
+        // FIXME -> per Kevin -> how about just putting the mediaViews in one of these new pojo?
+        // track them  so that it's indexed the name or the track id?
         this.publishingService = new PublishingService(new AudioPublisher());
         this.audioMessageHandler = new AudioMessageHandler(AUDIO_TOPIC);
-
-        Image logoImage = new Image(LOGO_IMAGE, 300, 400, false, true);
-        BackgroundImage backgroundImage= new BackgroundImage(logoImage, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT,
-                                                             BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT);
 
         Button startButton = new Button();
         Button stopButton = new Button();
         Button nextTrackButton = new Button();
         Button previousTrackButton = new Button();
         Button chooseDirectoryButton = new Button();
+        Button refreshButton = new Button();
 
-        Text titleLogoText = new Text("KafkaAmp!");
         Text actionMessage = new Text();
+        actionMessage.setFont(Font.font ("Verdana", 20));
+
+        songListView.setItems(songList);
+        songListView.setPrefHeight(200);
+        songListView.setPrefWidth(250);
 
         startButton.setText("Play");
         stopButton.setText("Stop");
         nextTrackButton.setText(">>");
         previousTrackButton.setText("<<");
         chooseDirectoryButton.setText("Choose Directory");
-
+        refreshButton.setText("Refresh");
 
         primaryStage.setTitle("KafkaAmp");
 
         playIntroSound();
-
 
         File audioDirectory = new File(LOCAL_AUDIO_STORE_PATH);
         File[] mp3Files = audioDirectory.listFiles((d, s) -> {
@@ -130,22 +139,35 @@ public class AudioHacking extends Application {
         for (File mp3File : mp3Files) {
             Media media = new Media(mp3File.toURI().toString());
             mediaViews.add(new MediaView(new MediaPlayer(media)));
+            songList.add(mp3File.getName());
         }
 
+        Image logoImage = new Image(LOGO_IMAGE);
+        ImageView logoImageView = new ImageView(logoImage);
+
+        Image titleImage = new Image(TITLE_IMAGE);
+        ImageView titleImageView = new ImageView(titleImage);
+
+        HBox logoTitleBox = new HBox(titleImageView);
+        logoTitleBox.setAlignment(Pos.CENTER);
+
         HBox logoBox = new HBox();
-        logoBox.getChildren().addAll(titleLogoText);
+        logoBox.getChildren().addAll(logoImageView, songListView);
+        logoBox.setAlignment(Pos.CENTER);
+
+        HBox statusBarBox = new HBox(actionMessage);
+        statusBarBox.setAlignment(Pos.CENTER);
+        statusBarBox.setStyle("-fx-background-color: #dddddd;");
 
         HBox buttonBox = new HBox();
-        buttonBox.getChildren().addAll(previousTrackButton, startButton, nextTrackButton, stopButton, chooseDirectoryButton);
+        buttonBox.getChildren().addAll(previousTrackButton, startButton, nextTrackButton, stopButton, chooseDirectoryButton, refreshButton);
+        buttonBox.setAlignment(Pos.CENTER);
 
         VBox vBoxRoot = new VBox(10);
         vBoxRoot.setAlignment(Pos.CENTER);
-        vBoxRoot.getChildren().addAll(logoBox, buttonBox, actionMessage);
+        vBoxRoot.getChildren().addAll(logoTitleBox, logoBox, buttonBox, statusBarBox);
 
-        vBoxRoot.setBackground(new Background(backgroundImage));
-
-        System.out.println("setting scene...");
-        Scene mediaScene = new Scene(vBoxRoot, 500, 500);
+        Scene mediaScene = new Scene(vBoxRoot, 525, 550);
 
         primaryStage.setScene(mediaScene);
         primaryStage.show();
@@ -154,14 +176,23 @@ public class AudioHacking extends Application {
             pickDirectory(primaryStage);
         });
 
+        refreshButton.setOnAction(event -> {
+            List<String> songs = audioMessageHandler.consume();
+            songList.addAll(songs);
+            log.info("songs={}", songs);
+            songListView.setItems(songList);
+        });
+
         startButton.setOnAction(event -> {
             mediaViews.get(currentTrackId).getMediaPlayer().play();
+            songListView.getSelectionModel().select(currentTrackId);
             actionMessage.setText("Playing...");
         });
 
         stopButton.setOnAction(event -> {
             actionMessage.setText("Stopping...");
             mediaViews.get(currentTrackId).getMediaPlayer().stop();
+            songListView.getSelectionModel().clearSelection();
             actionMessage.setText("Stopped");
         });
 
@@ -184,6 +215,7 @@ public class AudioHacking extends Application {
         else {
             currentTrackId++;
         }
+        songListView.getSelectionModel().select(currentTrackId);
         mediaViews.get(currentTrackId).getMediaPlayer().play();
     }
 
@@ -195,6 +227,7 @@ public class AudioHacking extends Application {
         else {
             currentTrackId--;
         }
+        songListView.getSelectionModel().select(currentTrackId);
         mediaViews.get(currentTrackId).getMediaPlayer().play();
     }
 

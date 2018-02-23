@@ -20,7 +20,7 @@ public class PublishingService {
         Path path = Paths.get(file.toURI());
         try {
             byte[] bytes = Files.readAllBytes(path);
-            audioPublisher.publish(bytes);
+            audioPublisher.publish(file.getName(), bytes);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
