@@ -56,7 +56,8 @@ public class AudioHacking extends Application {
     private AudioMessageHandler audioMessageHandler;
     private int currentTrackId = 0;
     private ObservableList<String> songList = FXCollections.observableArrayList();
-    ListView<String> songListView = new ListView<>();
+    private ListView<String> songListView = new ListView<>();
+    private List<MediaView> mediaViews = new ArrayList<>();
 
     public static void main(String[] args) {
         launch(args);
@@ -129,19 +130,6 @@ public class AudioHacking extends Application {
 
         playIntroSound();
 
-        File audioDirectory = new File(LOCAL_AUDIO_STORE_PATH);
-        File[] mp3Files = audioDirectory.listFiles((d, s) -> {
-            return s.toLowerCase().endsWith("mp3");
-        });
-
-        List<MediaView> mediaViews = new ArrayList<>();
-
-        for (File mp3File : mp3Files) {
-            Media media = new Media(mp3File.toURI().toString());
-            mediaViews.add(new MediaView(new MediaPlayer(media)));
-            songList.add(mp3File.getName());
-        }
-
         Image logoImage = new Image(LOGO_IMAGE);
         ImageView logoImageView = new ImageView(logoImage);
 
@@ -178,7 +166,8 @@ public class AudioHacking extends Application {
 
         refreshButton.setOnAction(event -> {
             List<String> songs = audioMessageHandler.consume();
-            songList.addAll(songs);
+            refreshSongs();
+
             log.info("songs={}", songs);
             songListView.setItems(songList);
         });
@@ -198,6 +187,21 @@ public class AudioHacking extends Application {
 
         nextTrackButton.setOnAction(event -> nextTrack(mediaViews));
         previousTrackButton.setOnAction(event -> previousTrack(mediaViews));
+    }
+
+    private void refreshSongs() {
+        File audioDirectory = new File(LOCAL_AUDIO_STORE_PATH);
+        File[] mp3Files = audioDirectory.listFiles((d, s) -> {
+            return s.toLowerCase().endsWith("mp3");
+        });
+
+
+        for (File mp3File : mp3Files) {
+            Media media = new Media(mp3File.toURI().toString());
+            mediaViews.add(new MediaView(new MediaPlayer(media)));
+            songList.add(mp3File.getName());
+        }
+
     }
 
     private void playIntroSound() {
