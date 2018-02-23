@@ -1,5 +1,9 @@
 # Kafka UDP Streamer
 
+# Tech Thursday Experiment
+You've landed here and might be thinking, WAT? This repo served as a 1 day hack event at work where we got to choose our fun. This app 
+may not function and it not considered stable. It requires a running Kafka cluster and Mongo database.
+
 # Topic/Producer configuration
 Until we try splitting audio files into small chunks, it will be necessary to increase the `max.message.bytes` to something large 
 enough to support some songs.
